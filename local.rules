@@ -1,0 +1,56 @@
+
+alert tcp any any -> $HOME_NET 9389 (msg:"SS POLICY Active Directory Web Services"; flow:to_server,established; flags:PA; content:"/ActiveDirectoryWebServices/Windows/Enumeration"; classtype:attempted-recon; sid:1000017;)
+
+alert tcp any any -> $HOME_NET [139,445] (msg:"SS POLICY Remote StartServiceW Request"; flow:to_server,established; content:"|ff fe 00 00 01 00 00 00|"; content:"|17 c0 11 00|"; content:"|03 10 00 00 00 34 00 00 00 06 00 00 00 1c 00 00 00 00 00 13 00|"; classtype:rpc-portmap-decode; sid:1000002;)
+
+
+alert tcp any any -> $HOME_NET 135 (msg:"SS POLICY DCOM Communication WMI Remote Code Execution"; flow:to_server,established; content:"|18 ad 09 f3 6a d8 d0 11 a0 75 00 c0 4f b6 88 20|"; classtype:rpc-portmap-decode; sid:1000004;)
+
+alert tcp any any -> ![10.0.31.40] 5985 (msg:"SS POLICY WSMan Remote Execution WinRM"; content:"|50 4f 53 54|"; depth:4; content:"|20 2f 77 73 6d 61 6e|"; classtype:rpc-portmap-decode; sid:1000005;)
+
+
+alert tcp any any -> $HOME_NET 5985 (msg:"SS POLICY WinRM User Agent"; content:"User-Agent: Microsoft WinRM Client"; http_header; classtype:rpc-portmap-decode; sid:1000007;)
+alert tcp $DC_SERVERS 389 -> !$SERVERS any (msg:"SS SCAN Behavioral Unusual Port 389 traffic, Potential Scan or Reconnaissance"; flags:A; detection_filter: track by_dst, count 70, seconds 60; classtype:attempted-recon; sid:1000008;)
+
+alert tcp any any -> $HOME_NET 445 (msg:"SS SCAN Behavioral SAMR traffic, Potential Scan or Reconnaissance"; flags:PA; content:"|73 00 61 00 6d 00 72 00|"; detection_filter: track by_src, count 5, seconds 60; classtype:attempted-recon; sid:1000009;)
+
+alert tcp !$DC_SERVERS any -> any 49155 (msg:"SS POLICY DCSync Detected"; flow:to_server,established; flags:PA; content:"|00 00 03 10 00 00 00|"; content:"|01 00 03 00|"; content:"|09 06|"; classtype:attempted-admin; sid:1000010;)
+
+alert tcp any any -> $HOME_NET 445 (msg:"SS SCAN Behavioral 445 Session Enumeration, Potential Scan or Reconnaissance"; flags:PA; content:"|0a 00 00 00 00 00 00 00 0a 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00|"; detection_filter: track by_src, count 3, seconds 120; classtype:attempted-recon; sid:1000011;)
+
+alert tcp any any -> $HOME_NET 9389 (msg:"SS SCAN Behavioral Unusual Port ADWS traffic, Potential Scan or Reconnaissance"; flags:PA; detection_filter: track by_src,count 20,seconds 60; classtype:attempted-recon; sid:1000012;)
+
+
+alert tcp any any -> !$DC_SERVERS 445 (msg:"SS POLICY RPC SAMR Request"; flow:to_server,established; flags:PA; content:"|73 00 61 00 6d 00 72 00|"; classtype:rpc-portmap-decode; sid:1000016;)
+
+alert tcp any any -> $HOME_NET [139,445] (msg:"SS POLICY RPC SVCCTL Request"; flow:to_server,established; content:"|73 00 76 00 63 00 63 00 74 00 6c 00|"; classtype:rpc-portmap-decode; sid:1000017;)
+
+alert tcp ![192.168.47.78,10.0.31.89] any -> !$FILE_SERVERS any (msg:"SS POLICY RPC SRVSVC Request"; flow:to_server,established; flags:PA; content:"|73 00 72 00 76 00 73 00 76 00 63 00|"; classtype:rpc-portmap-decode; sid:1000018;)
+
+alert tcp any any -> [$HOME_NET,!$DC_SERVERS] any (msg:"SS POLICY RPC LSARPC Request"; flow:to_server,established; flags:PA; content:"|6c 00 73 00 61 00 72 00 70 00 63 00|"; classtype:rpc-portmap-decode; sid:1000019;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC ATSVC Request"; flow:to_server,established; flags:PA; content:"|61 00 74 00 73 00 76 00 63 00|"; classtype:rpc-portmap-decode; sid:1000020;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC WINSTATION_RPC Request"; flow:to_server,established; flags:PA; content:"|77 00 69 00 6e 00 73 00 74 00 61 00 74 00 69 00 6f 00 6e 00 5f 00 72 00 70 00 63 00|"; classtype:rpc-portmap-decode; sid:1000021;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC DAVCLNTRPC Request"; flow:to_server,established; flags:PA; content:"|64 00 61 00 76 00 63 00 6c 00 6e 00 74 00 72 00 70 00 63 00|"; classtype:rpc-portmap-decode; sid:1000022;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC EPMAP Request"; flow:to_server,established; flags:PA; content:"|65 00 70 00 6d 00 70 00|"; classtype:rpc-portmap-decode; sid:1000023;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC EVENTLOG Request"; flow:to_server,established; flags:PA; content:"|65 00 76 00 65 00 6e 00 74 00 6c 00 6f 00 67 00|"; classtype:rpc-portmap-decode; sid:1000024;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC NETLOGON Request"; flow:to_server,established; flags:PA; content:"|6e 00 65 00 74 00 6c 00 6f 00 67 00 6f 00 6e 00|"; classtype:rpc-portmap-decode; sid:1000025;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC ISeclogon Request"; flow:to_server,established; flags:PA; content:"|49 00 53 00 65 00 63 00 6c 00 6f 00 67 00 6f 00 6e 00|"; classtype:rpc-portmap-decode; sid:1000026;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC SFCAPI Request"; flow:to_server,established; flags:PA; content:"|73 00 66 00 63 00 61 00 70 00 69 00|"; classtype:rpc-portmap-decode; sid:1000027;)
+
+alert tcp any any -> !$FILE_SERVERS any (msg:"SS POLICY RPC WKSSVC Request"; flow:to_server,established; flags:PA; content:"|77 00 6b 00 73 00 73 00 76 00 63 00|"; classtype:rpc-portmap-decode; sid:1000028;)
+
+alert tcp any any -> $HOME_NET any (msg:"SS POLICY RPC WINLOGONRPC Request"; flow:to_server,established; flags:PA; content:"|77 00 69 00 6e 00 6c 00 6f 00 67 00 6f 00 6e 00 72 00 70 00 63 00|"; classtype:rpc-portmap-decode; sid:1000029;)
+
+alert tcp any any -> [$HOME_NET,!$DC_SERVERS] 445 (msg:"SS POLICY RPC WINREG Request"; flow:to_server,established; flags:PA; content:"|77 00 69 00 6E 00 72 00 65 00 67 00|"; classtype:rpc-portmap-decode; sid:1000030;)
+
+alert tcp $DC_SERVERS 389 -> $SERVERS any (msg:"SS SCAN Behavioral Unusual Port 389 traffic, Potential Scan or Reconnaissance"; flags:A; detection_filter: track by_src, count 100, seconds 60; classtype:attempted-recon; sid:1000031;)
+
+alert tcp any any -> $DC_SERVERS 389 (msg:"SS SCAN LDAP wholeSubTree Request, Potential Scan or Reconnaissance"; flags:PA; content:"|0a 01 02 0a 01 00|"; content:!"cn=system"; content:!"CN=Configuration"; content:!"proxyAddresses"; classtype:attempted-recon; sid:1000032;)
