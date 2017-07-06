@@ -1,8 +1,12 @@
+#!/usr/bin/python
+
 import os.path,re,sys
 from idstools import rule
 import argparse
 
-
+# Rule convertor
+# Supports the following snort's keywords:
+# msg,flow,content,pcre,flags,detection_filter,offset,depth,distance,within.
 def SnortToFortigate(snort_rules):
     rules = []
     fort_rules = []
