@@ -1,12 +1,8 @@
-#!/usr/bin/python
-
 import os.path,re,sys
 from idstools import rule
 import argparse
 
-# Rule convertor
-# Supports the following snort's keywords:
-# msg,flow,content,pcre,flags,detection_filter,offset,depth,distance,within.
+
 def SnortToFortigate(snort_rules):
     rules = []
     fort_rules = []
@@ -25,23 +21,23 @@ def SnortToFortigate(snort_rules):
         raw = raw.replace('flags:', '--tcp_flags ') if "flags" in raw else raw
         raw = raw.replace('distance:', '--distance ') if "distance" in raw else raw
         raw = raw.replace('within:', '--within ') if "within" in raw else raw
-        raw = raw.replace('depth:', '--distance ') if "depth" in raw else raw
-        raw = raw.replace('offset:', '--within ') if "offset" in raw else raw
+        raw =re.sub(r'depth:\s*(\d+)', r'--distance \1,packet', raw) if "depth" in raw else raw
+        raw = re.sub(r'offset:\s*(\d+)', r'--within \1,packet', raw) if "within" in raw else raw
         raw = raw.replace('nocase', '--nocase') if "nocase" in raw else raw
         raw = re.sub(r'detection_filter:\s*track\s*([^,]+)\s*,\s*count\s*(\d+)\s*,\s*seconds\s*(\d+)\s*',
                      r'--rate \2,\3; --track \1', raw) if "detection_filter" in raw else raw
         raw = re.sub(r'classtype[^;]+;\s?', '', raw)
         raw = re.sub(r'sid:\d+;\s?', '', raw)
         header = r.header.split(" ")
-        raw = re.sub(r'(msg:[^;]+;\s?)', r'\1--protocol %s; ' % header[1].upper(), raw)
+        raw = re.sub(r'(msg[^;]+;\s?)', r'\1--protocol %s; ' % header[1].upper(), raw)
         if header[2] != 'any':
-            raw = re.sub(r'(msg:[^;]+;\s?)', r'\1--src_addr %s; ' % header[2], raw)
+            raw = re.sub(r'(msg[^;]+;\s?)', r'\1--src_addr %s; ' % header[2], raw)
         if header[3] != 'any':
-            raw = re.sub(r'(msg:[^;]+;\s?)', r'\1--src_port %s; ' % header[2], raw)
+            raw = re.sub(r'(msg[^;]+;\s?)', r'\1--src_port %s; ' % header[2], raw)
         if header[5] != 'any':
-            raw = re.sub(r'(msg:[^;]+;\s?)', r'\1--dst_addr %s; ' % header[5], raw)
+            raw = re.sub(r'(msg[^;]+;\s?)', r'\1--dst_addr %s; ' % header[5], raw)
         if header[6] != 'any':
-            raw = re.sub(r'(msg:[^;]+;\s?)', r'\1--dst_port %s; ' % header[6], raw)
+            raw = re.sub(r'(msg[^;]+;\s?)', r'\1--dst_port %s; ' % header[6], raw)
         fort_rules += [raw]
 
     return fort_rules
