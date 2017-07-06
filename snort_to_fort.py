@@ -6,12 +6,16 @@ import argparse
 def SnortToFortigate(snort_rules):
     rules = []
     fort_rules = []
-    if os.path.isfile(snort_rules):
-        rules += rule.parse_file(snort_rules)
-    else:
-        rules += [rule.parse(snort_rules)]
+    try:
+        if os.path.isfile(snort_rules):
+            rules += rule.parse_file(snort_rules)
+        else:
+            rules += [rule.parse(snort_rules)]
+    except:
+        sys.exit("Error parsing snort rules. Please check the syntax.")
     for r in rules:
-        #parsed = rule.parse(r)
+        if not re.search('^alert\s+(tcp|udp|icmp|ip)\s+[^(]+\(.+\)$', str, re.IGNORECASE):
+            sys.exit("Invalid rule specified.\n" + r.raw + "\n")
         raw = r.raw[r.raw.index('('):]
         raw = raw.replace('msg:', '--msg ')
         raw = raw.replace('flow:', '--flow ') if "flow" in raw else raw
@@ -57,9 +61,12 @@ def main():
         sys.exit(1)
     list = SnortToFortigate(args.rules)
     if args.output is not None:
-        f = open(args.output,'w')
-        f.write("\n".join(list))
-        f.close()
+        try:
+            f = open(args.output,'w')
+            f.write("\n".join(list))
+            f.close()
+        except:
+            sys.exit("Error opening %s." % args.output)
     else:
         for r in list:
             print r
